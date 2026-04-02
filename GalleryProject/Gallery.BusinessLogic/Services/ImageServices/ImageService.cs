@@ -7,17 +7,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
-namespace Gallery.BusinessLogic.Services
+namespace Gallery.BusinessLogic.Services.ImageServices
 {
-    public class ImageService
+    public sealed class ImageService : IImageService
     {
+        private const string ImageGetByIdRoute = "/api/images/getById/";
         private readonly IImageRepository _imageRepository;
 
         public ImageService(IImageRepository imageRepository)
         {
-            _imageRepository = imageRepository;
+            _imageRepository = imageRepository ?? throw new ArgumentNullException(nameof(imageRepository));
         }
 
         public async Task<Image> GetImageByIdAsync(int id)
@@ -28,7 +28,7 @@ namespace Gallery.BusinessLogic.Services
         public async Task<IEnumerable<ImageInfo>> GetGalleryAsync(string? search, string? filter)
         {
             var images = _imageRepository.GetAll();
-            if (!string.IsNullOrEmpty(search))
+            if (!string.IsNullOrWhiteSpace(search))
             {
                 images = images.Where(i =>
                     i.Title.Contains(search) || i.Description.Contains(search));
@@ -48,7 +48,7 @@ namespace Gallery.BusinessLogic.Services
                 Title = i.Title,
                 Description = i.Description,
                 UploadDate = i.UploadDate,
-                ImageUrl = $"/Image/getById/{i.ImgId}"
+                ImageUrl = $"{ImageGetByIdRoute}{i.ImgId}"
             }).ToListAsync();
         }
 
@@ -57,9 +57,13 @@ namespace Gallery.BusinessLogic.Services
             image.UploadDate = DateTime.Now;
             await _imageRepository.AddAsync(image);
         }
-        public async Task DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int id)
         {
+            var image = await _imageRepository.GetByIdAsync(id);
+            if (image == null) return false;
+       
             await _imageRepository.DeleteAsync(id);
+            return true;
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using Gallery.BusinessLogic.Models;
-using Gallery.BusinessLogic.Services;
+using Gallery.BusinessLogic.Services.ImageServices;
 using Gallery.DataAccess.Models;
 using Gallery.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -8,12 +8,14 @@ using Microsoft.AspNetCore.Mvc;
 namespace Gallery.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/images")]
     public class ImageController : ControllerBase
     {
-        private readonly ImageService _imageService;
+        private readonly IImageService _imageService;
+        private static readonly string[] AllowedContentTypes = { "image/jpeg", "image/png", "image/gif", "image/webp" };
+        private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
 
-        public ImageController(ImageService imageService)
+        public ImageController(IImageService imageService)
         {
             _imageService = imageService;
         }
@@ -22,6 +24,17 @@ namespace Gallery.Controllers
         [HttpPost("upload")]
         public async Task<ActionResult> Upload([FromForm] UploadImageRequest request)
         {
+            if (request.File == null || request.File.Length == 0)
+            {
+                return BadRequest("Файл не вибрано або він пошкоджений (порожній).");
+            }
+
+            var extension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
+            if (!AllowedContentTypes.Contains(request.File.ContentType) || !AllowedExtensions.Contains(extension))
+            {
+                return BadRequest("Невірний формат файлу. Дозволені формати: JPEG, PNG, GIF, WEBP.");
+            }
+
             using var memoryStream = new MemoryStream();
             await request.File.CopyToAsync(memoryStream);
 
@@ -42,6 +55,11 @@ namespace Gallery.Controllers
         [HttpGet("getById/{id}", Name = "GetImageById")]
         public async Task<IActionResult> GetImageById([FromRoute] int id)
         {
+            if(id <= 0)
+            {
+                return BadRequest("Невірний ID зображення.");
+            }
+
             var image = await _imageService.GetImageByIdAsync(id);
             if (image == null) return NotFound();
 
@@ -54,22 +72,18 @@ namespace Gallery.Controllers
         public async Task<IActionResult> GetGallery([FromQuery] string? search, [FromQuery] string? filter)
         {           
             var images = await _imageService.GetGalleryAsync(search, filter);
-            // Повертаємо список без самих байтів (ImageData = null), щоб не перевантажувати мережу
-            //var result = images.Select(i => new ImageInfo
-            //{
-            //    ImgId = i.ImgId,
-            //    Title = i.Title,
-            //    Description = i.Description,
-            //    UploadDate = i.UploadDate,
-            //    ImageUrl = $"/Image/getById/{i.ImgId}"
-            //});
             return Ok(images);
         }
         [HttpDelete("delete/{id}", Name = "DeleteImageById")]
         public async Task<IActionResult> DeleteImageAsync(int id)
         {
-            await _imageService.DeleteAsync(id);
-            return Ok("Зображення видалено");
+            if (id <= 0)
+            {
+                return BadRequest("Невірний ID зображення.");
+            }
+            if(await _imageService.DeleteAsync(id))
+                return Ok("Зображення видалено");
+            return NotFound($"Зображення з ID {id} не знайдено.");
         }
     }
 }
