@@ -1,16 +1,16 @@
-﻿using Gallery.BusinessLogic.Services;
+﻿using Gallery.BusinessLogic.Services.UserService;
 using Gallery.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gallery.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/user")]
     public class UserController: ControllerBase
     {
-        private readonly UserService _userService;
+        private readonly IUserService _userService;
 
-        public UserController(UserService userService)
+        public UserController(IUserService userService)
         {
             _userService = userService;
         }

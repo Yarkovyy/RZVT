@@ -6,20 +6,20 @@ using System.Threading.Tasks;
 using Gallery.DataAccess.Models;
 using Gallery.DataAccess.Repositories.UserRepositories;
 
-namespace Gallery.BusinessLogic.Services
+namespace Gallery.BusinessLogic.Services.UserService
 {
-    public class UserService
+    public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
 
         public UserService(IUserRepository userRepository)
         {
-            _userRepository = userRepository; 
-        }       
+            _userRepository = userRepository;
+        }
 
         public async Task RegisterAsync(string email, string password)
-        {  
-            
+        {
+
             if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
             {
                 throw new ArgumentException("Невірний формат Email.");
@@ -31,7 +31,7 @@ namespace Gallery.BusinessLogic.Services
                 throw new InvalidOperationException("Користувач з таким Email вже існує.");
             }
 
-            var user = new User { Email = email, Password = password }; 
+            var user = new User { Email = email, Password = password };
             await _userRepository.AddAsync(user);
         }
 
