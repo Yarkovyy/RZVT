@@ -1,4 +1,4 @@
-﻿using Gallery.BusinessLogic.Services;
+﻿using Gallery.BusinessLogic.Services.UserService;
 using GalleryMVC.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -7,8 +7,8 @@ namespace GalleryMVC.Controllers
 {
     public class UserController : Controller
     {
-        private readonly UserService _userService;
-        public UserController(UserService userService)
+        private readonly IUserService _userService;
+        public UserController(IUserService userService)
         {
             _userService = userService;
         }

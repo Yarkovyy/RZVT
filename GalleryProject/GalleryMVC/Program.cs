@@ -1,4 +1,6 @@
 using Gallery.BusinessLogic.Services;
+using Gallery.BusinessLogic.Services.ImageServices;
+using Gallery.BusinessLogic.Services.UserService;
 using Gallery.DataAccess;
 using Gallery.DataAccess.Repositories.ImageRepositories;
 using Gallery.DataAccess.Repositories.UserRepositories;
@@ -18,8 +20,9 @@ builder.Services.AddScoped<IImageRepository, ImageRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 
-builder.Services.AddScoped<ImageService>();
-builder.Services.AddScoped<UserService>();
+
+builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddControllersWithViews();
 
 // Додаємо підтримку сесій

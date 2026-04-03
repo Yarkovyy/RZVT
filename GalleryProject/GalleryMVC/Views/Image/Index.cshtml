@@ -6,14 +6,14 @@
 
 <div class="text-center">
 
-    @if (Context.Session.GetInt32("UserId") != null)
+    @* @if (Context.Session.GetInt32("UserId") != null)
     {
         <div class="mb-4 text-end">
             <a asp-controller="Image" asp-action="Upload" class="btn btn-success">
                 + Додати нове зображення
             </a>
         </div>
-    }
+    } *@
 
     @if (!Model.Any())
     {
@@ -21,7 +21,6 @@
     }
     else
     {
-        @* <div class="card" style="width: 18rem;"> *@
         <div class="row">
             @foreach (var photo in Model)
             {
