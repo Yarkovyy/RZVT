@@ -12,7 +12,6 @@ namespace GalleryMVC.Controllers
         {
             _userService = userService;
         }
-        // GET: UserController
         public ActionResult Index()
         {
             return View();
@@ -59,7 +58,7 @@ namespace GalleryMVC.Controllers
 
                 return RedirectToAction("Index", "Image");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 ModelState.AddModelError(string.Empty, "Невірний логін або пароль");
                 return View(request);
@@ -74,6 +73,5 @@ namespace GalleryMVC.Controllers
             // Повертаємо користувача в галерею
             return RedirectToAction("Index", "Image");
         }
-
     }
 }

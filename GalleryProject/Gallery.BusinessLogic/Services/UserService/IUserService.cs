@@ -6,5 +6,6 @@ namespace Gallery.BusinessLogic.Services.UserService
     {
         Task<User?> LoginAsync(string email, string password);
         Task RegisterAsync(string email, string password);
+        Task<string> GetEmailByIdAsync(int id);
     }
 }

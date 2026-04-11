@@ -12,6 +12,7 @@ namespace Gallery.DataAccess.Repositories.ImageRepositories
         public IQueryable<Image> GetAll();
         public Task<Image?> GetByIdAsync(int id);
         public Task AddAsync(Image image);
+        public Task UpdateAsync(Image image);
         public Task DeleteAsync(int id);
     }
 }

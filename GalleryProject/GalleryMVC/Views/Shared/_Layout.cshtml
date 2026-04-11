@@ -25,6 +25,9 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
+                        @* <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Image" asp-action="GetUserGallery">My Gallery</a>
+                        </li> *@
                     </ul>
 
                     <ul class="navbar-nav">
@@ -34,7 +37,7 @@
                                 @(Context.Session.GetString("UserEmail") ?? "Profile")
                             </a>
 
-                            <ul class="dropdown-menu dropdown-menu-end">
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
                                 @if (Context.Session.GetInt32("UserId") == null)
                                 {
                                     @* Користувач НЕ авторизований *@
@@ -52,9 +55,9 @@
                                 else
                                 {
                                     <li>
-                                        <a class="dropdown-item"
+                                        <a class="dropdown-item text-danger"
                                            asp-controller="User"
-                                           asp-action="Logout">Exit</a>
+                                           asp-action="Logout">Logout</a>
                                     </li>
                                 }
                             </ul>

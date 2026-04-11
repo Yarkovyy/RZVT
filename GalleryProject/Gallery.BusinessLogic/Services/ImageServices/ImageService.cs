@@ -52,11 +52,35 @@ namespace Gallery.BusinessLogic.Services.ImageServices
             }).ToListAsync();
         }
 
+        public async Task<IEnumerable<ImageInfo>> GetImagesByUserIdAsync(int? id)
+        {
+            var images = _imageRepository.GetAll();
+            images = images.Where(i => i.UserId == id);
+            return await images.Select(i => new ImageInfo
+            {
+                ImgId = i.ImgId,
+                Title = i.Title,
+                Description = i.Description,
+                UploadDate = i.UploadDate,
+                ImageUrl = $"{ImageGetByIdRoute}{i.ImgId}"
+            }).ToListAsync();
+        }
+
+
         public async Task UploadImageAsync(Image image)
         {
             image.UploadDate = DateTime.Now;
             await _imageRepository.AddAsync(image);
         }
+        public async Task UpdateImageInfoAsync(int id, string title, string description)
+        {
+            var image = await _imageRepository.GetByIdAsync(id);
+            if (image == null) return;
+            image.Title = title;
+            image.Description = description;
+            await _imageRepository.UpdateAsync(image);
+        }
+
         public async Task<bool> DeleteAsync(int id)
         {
             var image = await _imageRepository.GetByIdAsync(id);

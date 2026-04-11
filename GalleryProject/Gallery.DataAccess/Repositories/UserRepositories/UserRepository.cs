@@ -25,5 +25,10 @@ namespace Gallery.DataAccess.Repositories.UserRepositories
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<User?> GetByIdAsync(int id)
+        {
+            return await _context.Users.FindAsync(id);
+        }
     }
 }

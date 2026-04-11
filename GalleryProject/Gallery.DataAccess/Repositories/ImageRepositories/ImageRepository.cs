@@ -31,5 +31,10 @@ namespace Gallery.DataAccess.Repositories.ImageRepositories
             .Where(i => i.ImgId == id)
             .ExecuteDeleteAsync();
         }
+        public async Task UpdateAsync(Image image)
+        {
+            _context.Images.Update(image);
+            await _context.SaveChangesAsync();
+        }
     }
 }

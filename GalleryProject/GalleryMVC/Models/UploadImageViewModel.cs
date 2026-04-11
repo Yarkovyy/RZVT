@@ -1,10 +1,15 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using GalleryMVC.Attributes;
+using System.ComponentModel.DataAnnotations;
 
 namespace GalleryMVC.Models
 {
     public class UploadImageViewModel
     {
         [Required]
+        [AllowedExtensions(
+        new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" },
+        new[] { "image/jpeg", "image/png", "image/gif", "image/webp" }
+    )]
         public IFormFile File { get; init; }
 
         [Required]
