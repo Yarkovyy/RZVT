@@ -1,0 +1,6 @@
+@Gallery_HostAddress = http://localhost:5177
+
+GET {{Gallery_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
