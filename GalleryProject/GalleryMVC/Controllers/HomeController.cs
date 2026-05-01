@@ -12,7 +12,6 @@ namespace GalleryMVC.Controllers
         {
             _logger = logger;
         }
-
         public IActionResult Index()
         {
             return View();
@@ -24,9 +23,17 @@ namespace GalleryMVC.Controllers
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        public IActionResult Error(string? message)
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            var Message = message
+                       ?? ViewData["CustomErrorMessage"]?.ToString()
+                       ?? "An unexpected error occurred.";
+
+            return View(new ErrorViewModel
+            {
+                RequestId = System.Diagnostics.Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                Message = Message ?? "An unexpected error occurred."
+            });
         }
     }
 }

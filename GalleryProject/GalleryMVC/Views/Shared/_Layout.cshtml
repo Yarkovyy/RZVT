@@ -40,7 +40,7 @@
                             <ul class="dropdown-menu dropdown-menu-end shadow">
                                 @if (Context.Session.GetInt32("UserId") == null)
                                 {
-                                    @* Користувач НЕ авторизований *@
+                                    @* User is NOT authorized *@
                                     <li>
                                         <a class="dropdown-item"
                                            asp-controller="User"

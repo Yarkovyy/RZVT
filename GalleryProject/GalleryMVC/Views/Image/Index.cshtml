@@ -21,7 +21,7 @@
     }
     else
     {
-        <div class="row">
+        <div class="row" id="image-container">
             @foreach (var photo in Model)
             {
 
@@ -43,3 +43,38 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    @{
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+        <script>
+            const connection = new signalR.HubConnectionBuilder()
+                    .withUrl("/galleryHub")
+                    .build();
+
+            connection.on("ReceiveNewImage", (image) => {
+                console.log("Отримано нове зображення:", image);
+                const container = document.getElementById("image-container");
+
+            const newCard = `
+                <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
+                   <div class="card h-100 shadow-sm border-0">
+                       <a href="/Image/Details/${image.imgId}" class="text-decoration-none text-dark">
+                          <img src="${image.imageUrl}"
+                               class="card-img-top rounded"
+                               style="height: 250px; object-fit: cover;"
+                               alt="${image.title}" />
+                          <div class="card-body p-2">
+                              <h5 class="card-title h6">${image.title}</h5>
+                          </div>
+                      </a>
+                 </div>
+               </div>`;
+
+                container.insertAdjacentHTML('afterbegin', newCard);
+            });
+
+            connection.start().catch(err => console.error(err.toString()));
+        </script>
+    }
+}
