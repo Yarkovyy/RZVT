@@ -12,7 +12,7 @@ namespace Gallery.BusinessLogic.Services.ImageServices
 {
     public sealed class ImageService : IImageService
     {
-        private const string ImageGetByIdRoute = "/api/images/getById/";
+        private const string ImageGetByIdRoute = "/images/getById/";
         private readonly IImageRepository _imageRepository;
 
         public ImageService(IImageRepository imageRepository)

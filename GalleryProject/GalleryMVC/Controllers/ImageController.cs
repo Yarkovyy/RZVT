@@ -1,29 +1,34 @@
-﻿using Gallery.BusinessLogic.Services.ImageServices;
+﻿using Gallery.BusinessLogic.Models;
+using Gallery.BusinessLogic.Services.ImageServices;
 using Gallery.BusinessLogic.Services.UserService;
 using Gallery.DataAccess.Models;
+using GalleryMVC.Filters;
 using GalleryMVC.Models;
+using GalleryMVC.SignalR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.SignalR;
 
 namespace GalleryMVC.Controllers
 {
+    [ServiceFilter(typeof(ControllerLoggingFilter))]
     public class ImageController : Controller
     {
         private readonly IImageService _imageService;
         private readonly IUserService _userService;
+        private readonly IHubContext<GalleryHub> _hubContext;
 
-        //private static readonly string[] AllowedContentTypes = { "image/jpeg", "image/png", "image/gif", "image/webp" };
-        //private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
-
-        public ImageController(IImageService imageService, IUserService userService)
+        public ImageController(IImageService imageService, IUserService userService, IHubContext<GalleryHub> hubContext)
         {
             _imageService = imageService;
             _userService = userService;
+            _hubContext = hubContext;
         }
 
         public async Task<IActionResult> Index(string? search, string? filter)
         {
+            //throw new Exception("Exeption for test GlobalExceptionFilter");
             var images = await _imageService.GetGalleryAsync(search, filter);
             return View(images);
         }
@@ -33,33 +38,33 @@ namespace GalleryMVC.Controllers
 
             if (currentUserId == null)
             {
-                return RedirectToAction("Login", "User"); // Якщо сесія згасла — відправляємо логінитись
+                return RedirectToAction("Login", "User");
             }
 
             var images = await _imageService.GetImagesByUserIdAsync(currentUserId);
             return View(images);
         }
+
+        [TypeFilter(typeof(ValidateEntityIdFilter), Arguments = new object[] { "Image" })]
         public async Task<IActionResult> GetImageFile(int id)
         {
-
-            if (id <= 0)
-            {
-                return NotFound();
-            }
             var image = await _imageService.GetImageByIdAsync(id);
-            if (image == null) return NotFound();
-            
+            if (image == null)
+            {
+                return RedirectToError("Image file not found.");
+            }
+
             return File(image.ImageData, image.ContentType);
         }
+
+        [TypeFilter(typeof(ValidateEntityIdFilter), Arguments = new object[] { "Image" })]
         public async Task<IActionResult> Details(int id)
         {
-
-            if (id <= 0)
-            {
-                return NotFound();
-            }
             var image = await _imageService.GetImageByIdAsync(id);
-            if (image == null) return NotFound();
+            if (image == null)
+            {
+                return RedirectToError("We couldn't find the details for this image.");
+            }
 
             var img = new ImageDetailsViewModel
             {
@@ -89,20 +94,8 @@ namespace GalleryMVC.Controllers
 
             if (currentUserId == null)
             {
-                return RedirectToAction("Login", "User"); // Якщо сесія згасла — відправляємо логінитись
+                return RedirectToAction("Login", "User"); 
             }
-
-            //if (request.File == null || request.File.Length == 0)
-            //{
-            //    ModelState.AddModelError("File", "Please select a file");
-            //    return View(request);
-            //}
-            //var extension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
-            //if (!AllowedContentTypes.Contains(request.File.ContentType) || !AllowedExtensions.Contains(extension))
-            //{
-            //    ModelState.AddModelError("File", "Invalid file format. Allowed formats: JPEG, PNG, GIF, WEBP.");
-            //    return View(request);
-            //}
 
             using var memoryStream = new MemoryStream();
             await request.File.CopyToAsync(memoryStream);
@@ -115,22 +108,37 @@ namespace GalleryMVC.Controllers
                 ContentType = request.File.ContentType
             };
             await _imageService.UploadImageAsync(entity);
+
+
+
+            var imageInfo = new ImageInfo
+            {
+                ImgId = entity.ImgId,
+                Title = entity.Title,
+                Description = entity.Description,
+                UploadDate = DateTime.Now,
+                UserId = entity.UserId,
+                ImageUrl = Url.Action("GetImageFile", "Image", new { id = entity.ImgId })
+            };
+
+            await _hubContext.Clients.All.SendAsync("ReceiveNewImage", imageInfo);
+
             return RedirectToAction(nameof(Index));
         }
 
 
 
         public async Task<IActionResult> Edit(int id)
-        {            
+        {
             var image = await _imageService.GetImageByIdAsync(id);
             if (image == null)
             {
-                return NotFound($"Image with ID {id} not found.");
+                return RedirectToError($"Image with ID {id} not found.");
             }
             int? currentUserId = HttpContext.Session.GetInt32("UserId");
             if (currentUserId == null || image.UserId != currentUserId)
             {
-                return Forbid();
+                return RedirectToError("Access denied. You can only edit your own images.");
             }
 
             var model = new EditImageViewModel
@@ -149,11 +157,11 @@ namespace GalleryMVC.Controllers
         {
             if (!ModelState.IsValid) return View(model);
             var image = await _imageService.GetImageByIdAsync(model.ImgId);
-            if (image == null) return NotFound();            
+            if (image == null) return RedirectToError("Image not found for editing.");
             int? currentUserId = HttpContext.Session.GetInt32("UserId");
             if (currentUserId == null || image.UserId != currentUserId)
             {
-                return Forbid();
+                return RedirectToError("You do not have permission to modify this image.");
             }
             await _imageService.UpdateImageInfoAsync(model.ImgId, model.Title, model.Description);
 
@@ -164,25 +172,22 @@ namespace GalleryMVC.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ActionName("Delete")]
+        [TypeFilter(typeof(ValidateEntityIdFilter), Arguments = new object[] { "Image" })]
         public async Task<IActionResult> DeleteImageAsync(int id)
         {
-            if (id <= 0)
-            {
-                return BadRequest("Invalid Image ID.");
-            }
 
             var image = await _imageService.GetImageByIdAsync(id);
 
             if (image == null)
             {
-                return NotFound($"Image with ID {id} not found.");
+                return RedirectToError($"Cannot delete image with ID {id} because it doesn't exist.");
             }
 
             int? currentUserId = HttpContext.Session.GetInt32("UserId");
 
             if (currentUserId == null || image.UserId != currentUserId)
             {
-                return Forbid();
+                return RedirectToError("Permission denied. Deletion is restricted to the owner.");
             }
 
             bool isDeleted = await _imageService.DeleteAsync(id);
@@ -192,7 +197,11 @@ namespace GalleryMVC.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            return StatusCode(500, "Internal server error during deletion.");
+            return RedirectToError("A server error occurred while trying to delete the image.");
+        }
+        private RedirectToActionResult RedirectToError(string message)
+        {
+            return RedirectToAction("Error", "Home", new { message = message });
         }
     }
 }

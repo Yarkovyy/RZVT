@@ -52,7 +52,6 @@ namespace GalleryMVC.Controllers
             {
                 var user = await _userService.LoginAsync(request.Email, request.Password);
 
-                // Записуємо ID користувача в сесію
                 HttpContext.Session.SetInt32("UserId", user.UserId);
                 HttpContext.Session.SetString("UserEmail", user.Email);
 
@@ -67,10 +66,8 @@ namespace GalleryMVC.Controllers
         
         public IActionResult Logout()
         {
-            // Повністю видаляємо всі дані з сесії
             HttpContext.Session.Clear();
 
-            // Повертаємо користувача в галерею
             return RedirectToAction("Index", "Image");
         }
     }
