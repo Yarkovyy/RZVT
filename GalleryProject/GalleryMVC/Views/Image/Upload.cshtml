@@ -1,0 +1,48 @@
+﻿@model GalleryMVC.Models.UploadImageViewModel
+@{
+    ViewData["Title"] = "Upload Image";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 сol-lg-8">
+            <div class="card shadow border-0">
+                <div class="card-body p-4">
+                    <h2 class="card-title text-center mb-4">Upload New Image</h2>
+                    <hr />
+                    <form asp-action="Upload" method="post" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">Title</label>
+                            <input asp-for="Title" class="form-control" placeholder="Enter image title..." />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" rows="4" class="form-control" placeholder="Describe your image here..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label asp-for="File" class="form-label">Image File</label>
+                            <input asp-for="File" type="file" class="form-control" accept="image/*" />
+                            <span asp-validation-for="File" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <a asp-action="Index" class="btn btn-outline-secondary">&larr; Back to Gallery</a>
+                            <button type="submit" class="btn btn-success px-4">Upload Image</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

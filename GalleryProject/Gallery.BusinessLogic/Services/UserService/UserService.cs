@@ -22,13 +22,13 @@ namespace Gallery.BusinessLogic.Services.UserService
 
             if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
             {
-                throw new ArgumentException("Невірний формат Email.");
+                throw new ArgumentException("Invalid Email format.");
             }
 
             var existingUser = await _userRepository.GetByEmailAsync(email);
             if (existingUser != null)
             {
-                throw new InvalidOperationException("Користувач з таким Email вже існує.");
+                throw new InvalidOperationException("User with this Email already exists.");
             }
 
             var user = new User { Email = email, Password = password };
@@ -39,7 +39,18 @@ namespace Gallery.BusinessLogic.Services.UserService
         {
             var user = await _userRepository.GetByEmailAsync(email);
             if (user != null && user.Password == password) return user;
-            throw new UnauthorizedAccessException("Невірний Email або пароль.");
+            throw new UnauthorizedAccessException("Invalid Email or password.");
         }
+
+        public async Task<string> GetEmailByIdAsync(int id)
+        {
+            var user = await _userRepository.GetByIdAsync(id);
+            return user?.Email ?? "Unknown User";
+        }
+
+        //public async Task<User?> GetUserByIdAsync(int id)
+        //{
+        //    return await _userRepository.GetByIdAsync(id);
+        //}
     }
 }

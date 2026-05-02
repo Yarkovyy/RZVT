@@ -1,0 +1,45 @@
+﻿@{
+    ViewData["Title"] = "Gallery Home";
+}
+@using Gallery.BusinessLogic.Models
+@model IEnumerable<ImageInfo>
+
+<div class="text-center">
+
+    @if (Context.Session.GetInt32("UserId") != null)
+    {
+        <div class="mb-4 text-end">
+            <a asp-controller="Image" asp-action="Upload" class="btn btn-success px-4">
+                + Add New Image
+            </a>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info shadow-sm">The gallery is currently empty. Be the first to upload a photo!</div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var photo in Model)
+            {
+
+                <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <a asp-action="Details" asp-controller="Image" asp-route-id="@photo.ImgId" class="text-decoration-none text-dark">
+                            <img src="@Url.Action("GetImageFile", "Image", new { id = photo.ImgId })"
+                                 class="card-img-top rounded"
+                                 style="height: 250px; object-fit: cover;"
+                                 alt="@photo.Title" />
+
+                            <div class="card-body p-2">
+                                <h5 class="card-title h6">@photo.Title</h5>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

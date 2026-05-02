@@ -7,5 +7,6 @@
         public string Description { get; set; }
         public DateTime UploadDate { get; set; }
         public string ImageUrl { get; set; }
+        public int UserId { get; set; }
     }
 }

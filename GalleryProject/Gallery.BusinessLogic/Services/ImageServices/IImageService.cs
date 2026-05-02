@@ -9,5 +9,7 @@ namespace Gallery.BusinessLogic.Services.ImageServices
         Task<IEnumerable<ImageInfo>> GetGalleryAsync(string? search, string? filter);
         Task<Image> GetImageByIdAsync(int id);
         Task UploadImageAsync(Image image);
+        Task<IEnumerable<ImageInfo>> GetImagesByUserIdAsync(int? id);
+        Task UpdateImageInfoAsync(int id, string title, string description);
     }
 }
