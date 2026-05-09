@@ -1,8 +1,10 @@
 using Gallery.BusinessLogic.Services.ImageServices;
 using Gallery.BusinessLogic.Services.UserService;
 using Gallery.DataAccess;
+using Gallery.DataAccess.Models;
 using Gallery.DataAccess.Repositories.ImageRepositories;
 using Gallery.DataAccess.Repositories.UserRepositories;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +15,14 @@ var connectionString = builder.Configuration.GetConnectionString("GalleryConnect
 
 builder.Services.AddDbContext<GalleryContext>(options =>
     options.UseSqlServer(connectionString));
+
+builder.Services.AddDefaultIdentity<User>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.SignIn.RequireConfirmedEmail = false;
+})
+.AddRoles<IdentityRole<int>>()
+.AddEntityFrameworkStores<GalleryContext>();
 
 
 builder.Services.AddScoped<IImageRepository, ImageRepository>();
@@ -38,7 +48,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
 
 app.MapControllers();
 

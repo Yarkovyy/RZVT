@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 
 namespace Gallery.DataAccess.Models
 {
-    public class User
+    public class User:IdentityUser<int>
     {
-        public int UserId { get; set; }
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public ICollection<Image> Images { get; set; }
+        public ICollection<Image> Images { get; set; } = null!;
     }
 }

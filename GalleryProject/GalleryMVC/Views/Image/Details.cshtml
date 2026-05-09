@@ -1,5 +1,8 @@
 ﻿@using Gallery.BusinessLogic.Models
 @model ImageDetailsViewModel
+@using Gallery.DataAccess.Models
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<User> UserManager
 
 @{
     ViewData["Title"] = "Image Details";
@@ -47,7 +50,9 @@
                                     <strong>Upload date:</strong> #@Model.UploadDate.ToString("MMMM dd, yyyy")
                                 </p>
 
-                                @if (Context.Session.GetInt32("UserId") != null && Context.Session.GetInt32("UserId") == Model.UserId)
+                                @* @if (Context.Session.GetInt32("UserId") != null && Context.Session.GetInt32("UserId") == Model.UserId)
+                                { *@
+                                @if (User.Identity?.IsAuthenticated == true && UserManager.GetUserId(User) == Model.UserId.ToString())
                                 {
                                     <div class="d-grid gap-2 mt-4">
 

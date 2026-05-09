@@ -2,12 +2,17 @@
     ViewData["Title"] = "Gallery Home";
 }
 @using Gallery.BusinessLogic.Models
+@using Gallery.DataAccess.Models
+@using Microsoft.AspNetCore.Identity
 @model IEnumerable<ImageInfo>
+@inject UserManager<User> UserManager
 
 <div class="text-center">
 
-    @if (Context.Session.GetInt32("UserId") != null)
+    @if (User.Identity?.IsAuthenticated == true)
     {
+    @* @if (Context.Session.GetInt32("UserId") != null)
+    { *@    
         <div class="mb-4 text-end">
             <a asp-controller="Image" asp-action="Upload" class="btn btn-success px-4">
                 + Add New Image

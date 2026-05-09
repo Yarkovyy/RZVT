@@ -4,8 +4,10 @@ namespace Gallery.BusinessLogic.Services.UserService
 {
     public interface IUserService
     {
-        Task<User?> LoginAsync(string email, string password);
-        Task RegisterAsync(string email, string password);
+        Task RegisterAsync(string username, string email, string password);
+        Task LoginAsync(string usernameOrEmail, string password, bool rememberMe);
+        Task LogoutAsync();
         Task<string> GetEmailByIdAsync(int id);
+
     }
 }

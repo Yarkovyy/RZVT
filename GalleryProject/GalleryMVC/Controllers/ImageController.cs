@@ -5,7 +5,9 @@ using Gallery.DataAccess.Models;
 using GalleryMVC.Filters;
 using GalleryMVC.Models;
 using GalleryMVC.SignalR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.SignalR;
@@ -16,31 +18,28 @@ namespace GalleryMVC.Controllers
     public class ImageController : Controller
     {
         private readonly IImageService _imageService;
-        private readonly IUserService _userService;
         private readonly IHubContext<GalleryHub> _hubContext;
-
-        public ImageController(IImageService imageService, IUserService userService, IHubContext<GalleryHub> hubContext)
+        private readonly UserManager<User> _userManager;
+        public ImageController(IImageService imageService, IHubContext<GalleryHub> hubContext, UserManager<User> userManager)
         {
             _imageService = imageService;
-            _userService = userService;
-            _hubContext = hubContext;
+             _userManager = userManager;
+           _hubContext = hubContext;
         }
 
         public async Task<IActionResult> Index(string? search, string? filter)
         {
-            //throw new Exception("Exeption for test GlobalExceptionFilter");
             var images = await _imageService.GetGalleryAsync(search, filter);
             return View(images);
         }
+
+        [Authorize]
         public async Task<IActionResult> GetUserGallery()
         {
-            int? currentUserId = HttpContext.Session.GetInt32("UserId");
+            var userIdString = _userManager.GetUserId(User);
+            if (userIdString == null) return RedirectToLogin();
 
-            if (currentUserId == null)
-            {
-                return RedirectToAction("Login", "User");
-            }
-
+            int currentUserId = int.Parse(userIdString);
             var images = await _imageService.GetImagesByUserIdAsync(currentUserId);
             return View(images);
         }
@@ -65,13 +64,14 @@ namespace GalleryMVC.Controllers
             {
                 return RedirectToError("We couldn't find the details for this image.");
             }
+            var owner = await _userManager.FindByIdAsync(image.UserId.ToString());
 
             var img = new ImageDetailsViewModel
             {
                 ImgId = image.ImgId,
                 Title = image.Title,
                 Description = image.Description,
-                UploadedBy = await _userService.GetEmailByIdAsync(image.UserId),
+                UploadedBy = owner?.UserName ?? "Unknown",
                 UserId = image.UserId,
                 UploadDate = image.UploadDate
             };
@@ -79,10 +79,11 @@ namespace GalleryMVC.Controllers
             return View(img);
         }
 
-
+        [Authorize]
         [HttpGet]
         public IActionResult Upload() => View();
 
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(UploadImageViewModel request)
@@ -90,11 +91,10 @@ namespace GalleryMVC.Controllers
             if (!ModelState.IsValid)
                 return View(request);
 
-            int? currentUserId = HttpContext.Session.GetInt32("UserId");
-
-            if (currentUserId == null)
+            var userIdString = _userManager.GetUserId(User);
+            if (userIdString == null)
             {
-                return RedirectToAction("Login", "User"); 
+                return RedirectToLogin();
             }
 
             using var memoryStream = new MemoryStream();
@@ -103,7 +103,7 @@ namespace GalleryMVC.Controllers
             {
                 Title = request.Title,
                 Description = request.Description,
-                UserId = (int)currentUserId,
+                UserId = int.Parse(userIdString),
                 ImageData = memoryStream.ToArray(),
                 ContentType = request.File.ContentType
             };
@@ -126,8 +126,7 @@ namespace GalleryMVC.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-
+        [Authorize]
         public async Task<IActionResult> Edit(int id)
         {
             var image = await _imageService.GetImageByIdAsync(id);
@@ -135,8 +134,8 @@ namespace GalleryMVC.Controllers
             {
                 return RedirectToError($"Image with ID {id} not found.");
             }
-            int? currentUserId = HttpContext.Session.GetInt32("UserId");
-            if (currentUserId == null || image.UserId != currentUserId)
+            var userIdString = _userManager.GetUserId(User);
+            if (userIdString == null || image.UserId != int.Parse(userIdString))
             {
                 return RedirectToError("Access denied. You can only edit your own images.");
             }
@@ -150,25 +149,26 @@ namespace GalleryMVC.Controllers
             return View(model);
         }
 
-
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditImageViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
+
             var image = await _imageService.GetImageByIdAsync(model.ImgId);
             if (image == null) return RedirectToError("Image not found for editing.");
-            int? currentUserId = HttpContext.Session.GetInt32("UserId");
-            if (currentUserId == null || image.UserId != currentUserId)
+            var userIdString = _userManager.GetUserId(User);
+            if (userIdString == null || image.UserId != int.Parse(userIdString))
             {
-                return RedirectToError("You do not have permission to modify this image.");
+                return RedirectToError("Permission denied.");
             }
             await _imageService.UpdateImageInfoAsync(model.ImgId, model.Title, model.Description);
 
             return RedirectToAction("Details", new { id = model.ImgId });
         }
 
-
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ActionName("Delete")]
@@ -183,11 +183,10 @@ namespace GalleryMVC.Controllers
                 return RedirectToError($"Cannot delete image with ID {id} because it doesn't exist.");
             }
 
-            int? currentUserId = HttpContext.Session.GetInt32("UserId");
-
-            if (currentUserId == null || image.UserId != currentUserId)
+            var userIdString = _userManager.GetUserId(User);
+            if (userIdString == null || image.UserId != int.Parse(userIdString))
             {
-                return RedirectToError("Permission denied. Deletion is restricted to the owner.");
+                return RedirectToError("Permission denied.");
             }
 
             bool isDeleted = await _imageService.DeleteAsync(id);
@@ -202,6 +201,10 @@ namespace GalleryMVC.Controllers
         private RedirectToActionResult RedirectToError(string message)
         {
             return RedirectToAction("Error", "Home", new { message = message });
+        }
+        private RedirectToActionResult RedirectToLogin()
+        {
+            return RedirectToAction("Login", "Account", new { area = "Identity" });
         }
     }
 }

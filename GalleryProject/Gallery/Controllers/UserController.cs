@@ -16,11 +16,11 @@ namespace Gallery.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterOrLoginUserRequest request)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             try
             {
-                await _userService.RegisterAsync(request.Email, request.Password);
+                await _userService.RegisterAsync(request.Username, request.Email, request.Password);
                 return Ok();
             }
             catch (Exception ex)
@@ -30,12 +30,12 @@ namespace Gallery.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] RegisterOrLoginUserRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             try
             {
-                var user = await _userService.LoginAsync(request.Email, request.Password);
-                return Ok(new { user.UserId, user.Email });
+                await _userService.LoginAsync(request.UsernameOrEmail, request.Password, request.RememberMe);
+                return Ok(new { request.UsernameOrEmail, request.Password, request.RememberMe });
             }
             catch (Exception ex)
             {
